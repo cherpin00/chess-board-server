@@ -1,0 +1,44 @@
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Chess Engine</title>
+		<link
+			rel="stylesheet"
+			href="{{url_for('static', filename='css/chessboard-1.0.0.min.css')}}"
+		/>
+		<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+		<script src="{{url_for('static', filename='js/chessboard-1.0.0.min.js')}}"></script>
+	</head>
+	<body>
+		<div id="myBoard" style="width: 400px"></div>
+		<button id="startBtn">Start Position</button>
+		<button id="clearBtn">Clear Board</button>
+		<script>
+			function onChange() {
+				console.log("Board changed: ", board.fen());
+				$.ajax({
+					type: "POST",
+					contentType: "application/json",
+					data: JSON.stringify({ fen: board.fen() }),
+					url: "/updateBoard",
+				});
+			}
+			var fen = "{{ fen }}";
+			if (!fen) {
+				fen = "start";
+			}
+			var config = {
+				draggable: true,
+				dropOffBoard: "snapback", // this is the default
+				position: fen,
+				sparePieces: true,
+				onChange: onChange,
+			};
+			var board = Chessboard("myBoard", config);
+			$("#startBtn").on("click", board.start);
+			$("#clearBtn").on("click", board.clear);
+		</script>
+	</body>
+</html>
