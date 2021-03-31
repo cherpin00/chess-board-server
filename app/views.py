@@ -16,9 +16,7 @@ def index():
 @app.route('/board')
 def redner_board():
     board = chess.Board()
-    # return render_template('home.html', fen=board.fen().split(" ")[0])
-    return render_template(
-        'home.html', fen="rnbqkbnr/pppppppp/8/2Q1P3/8/6P1/PPPP1P1P/RNB1KBNR")
+    return render_template('home.html', fen=board.fen().split(" ")[0])
 
 
 @app.route('/img/<path:filename>')
