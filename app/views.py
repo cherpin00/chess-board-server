@@ -17,6 +17,7 @@ def index():
 @app.route('/board')
 def redner_board():
     board = chess.Board()
+    # TODO: the env is not working
     return render_template('home.html', fen=board.fen().split(" ")[0], host=os.environ.get("host", "127.0.0.1:5000"))
 
 
