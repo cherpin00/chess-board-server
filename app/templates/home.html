@@ -10,17 +10,20 @@
 		/>
 		<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
 		<script src="{{url_for('static', filename='js/chessboard-1.0.0.min.js')}}"></script>
+		<script src="{{url_for('static', filename='js/chessLibrary/chess.js')}}"></script>
 	</head>
 	<body>
 		<div id="myBoard" style="width: 400px"></div>
-		<button id="startBtn">Start Position</button>
-		<button id="clearBtn">Clear Board</button>
+		<label>Status:</label>
+		<div id="status"><label>FEN:</label></div>
+		<div id="fen"><label>PGN:</label></div>
+		<div id="pgn"></div>
 		<script>
 			// source: https://github.com/oakmac/chessboardjs/blob/master/examples/5000-legal-moves.example
-			// var fen = "{{ fen }}";
-			// if (!fen) {
-			// 	fen = "start";
-			// }
+			var fen = "{{ fen }}";
+			if (!fen) {
+				fen = "start";
+			}
 			var board = null;
 			var game = new Chess();
 			var $status = $("#status");
@@ -100,19 +103,16 @@
 
 			var config = {
 				position: fen,
-				sparePieces: true,
+				// sparePieces: true,
 				draggable: true,
 				onChange: onChange,
 				onDrop: onDrop,
 				onSnapEnd: onSnapEnd,
 				onDragStart: onDragStart,
 			};
-			var board = Chessboard("myBoard", config);
 
+			board = Chessboard('myBoard', config)
 			updateStatus();
-
-			$("#startBtn").on("click", board.start);
-			$("#clearBtn").on("click", board.clear);
 		</script>
 	</body>
 </html>
