@@ -1,4 +1,5 @@
 import logging
+import os
 
 import chess
 from flask import render_template, send_from_directory, request
@@ -16,7 +17,7 @@ def index():
 @app.route('/board')
 def redner_board():
     board = chess.Board()
-    return render_template('home.html', fen=board.fen().split(" ")[0])
+    return render_template('home.html', fen=board.fen().split(" ")[0], host=os.environ.get("host", "127.0.0.1:5000"))
 
 
 @app.route('/img/<path:filename>')

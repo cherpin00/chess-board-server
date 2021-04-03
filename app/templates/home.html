@@ -67,7 +67,7 @@
 					type: "POST",
 					contentType: "application/json",
 					data: JSON.stringify({ fen: board.fen() }),
-					url: "/updateBoard",
+					url: "http://{{ host }}/updateBoard",
 				});
 			}
 			function onDragStart(source, piece, position, orientation) {
@@ -111,7 +111,7 @@
 				onDragStart: onDragStart,
 			};
 
-			board = Chessboard('myBoard', config)
+			board = Chessboard("myBoard", config);
 			updateStatus();
 		</script>
 	</body>
