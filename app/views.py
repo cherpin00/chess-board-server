@@ -6,6 +6,7 @@ from flask import render_template, send_from_directory, request
 from flask.json import jsonify
 
 from app import app
+import motorControl
 
 
 @app.route('/')
@@ -31,3 +32,7 @@ def update_board():
     ren = request.json
     print(ren)
     return jsonify(success=True), 200
+
+@app.route("/move/<distance>")
+def move(distance):
+    motorControl.Motor().move(10)
