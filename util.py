@@ -1,7 +1,14 @@
-import RPi.GPIO as GPIOis
 from time import sleep
 import logging
 import threading
+
+BOARD = True
+try:
+	import RPi.GPIO as GPIOis
+except ModuleNotFoundError:
+	logging.warning("Module RPI.GPIO error.  Running without board")
+	BOARD = False
+
 
 logging.basicConfig(level=logging.DEBUG)
 

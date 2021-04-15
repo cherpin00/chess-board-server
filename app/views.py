@@ -33,6 +33,20 @@ def update_board():
     print(ren)
     return jsonify(success=True), 200
 
-@app.route("/move/<distance>")
-def move(distance):
-    motorControl.Motor().move(10)
+@app.route("/control", methods=["POST", "GET"])
+def move():        
+    return render_template("control.html")
+
+@app.route("/mouse/position", methods=["POST"])
+def mouse_position():
+    x, y = request.json["x"], request.json["y"]
+    x = x/10
+    y = y/10
+    currPosition = motorControl.myMotor.goTo([x, y])
+    print(f"Current Position: {currPosition}")
+    return f"position ({currPosition})"
+
+@app.route("/calibrate")
+def calibrate():
+    motorControl.myMotor.home()
+    return jsonify({ "message" : f"Successfully homed arm. Current Posistion : {motorControl.myMotor.currentPosition}"})

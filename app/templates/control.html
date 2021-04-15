@@ -1,0 +1,59 @@
+{% extends "base.html" %} {% block content %}
+<style>
+	.center {
+		text-align: center;
+	}
+</style>
+<div class="center">
+	<canvas
+		id="board"
+		width="300"
+		height="150"
+		style="border: 1px solid #d3d3d3"
+	></canvas>
+    <button id="calibrate">Calibrate</button>
+    <form action="none" id="form">
+        <label >X coordinate</label>
+        <input type="text" id="x" name="x"><br><br>
+        <label >Y coordinate</label>
+        <input type="text" id="y" name="y"><br><br>
+    </form>
+    <button id="submit">Submit</button>
+</div>
+{% endblock %} {% block javascripts %}
+<script>
+    function move(x, y) {
+        jQuery.ajax({
+			url: "/mouse/position",
+			type: "POST",
+			data: JSON.stringify({ x: event.clientX, y: event.clientY }),
+			contentType: "application/json",
+			success: (response) => {
+				console.log(response);
+			},
+		});
+        //TODO: Send information to the y axsis.
+    }
+
+	document.getElementById("board").addEventListener("mousemove", (event) => {
+		move(event.clientX, event.clientY)
+	});
+
+    document.getElementById("calibrate").onclick = () => {
+        jQuery.ajax({
+			url: "/calibrate",
+			type: "GET",
+			success: (response) => {
+				console.log(response);
+			},
+		});
+    }
+
+    document.getElementById("submit").onclick = () => {
+        var formData = JSON.stringify($("#form").serializeArray())
+        console.log(formData)
+        move(formData[x], formData[y])
+    }
+    
+</script>
+{% endblock %}
