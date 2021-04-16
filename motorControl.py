@@ -18,28 +18,19 @@ except ModuleNotFoundError:
 
 from util import in_pins, isInputHigh, interrupt_handler
 
-if BOARD:
-	kit = MotorKit(i2c=board.I2C())
-
 g_cancel = False
 
 class Motor():
-	_instance = None
 	CONVERSION = 50
 	MAX_X = 45 * CONVERSION
-	POSITION_FILE = "currenPosition.dat"
-	AXIS = 0 #0 is x, 1 is y
 
-	def __init__(self):
-		raise RuntimeError('Call instance() instead')
-
-	@classmethod
-	def instance(cls):
-		if cls._instance is None:
-			cls._instance = cls.__new__(cls)
-			cls.currentPosition = [0, 0]
-			setup()
-		return cls._instance
+	def __init__(self, axis):
+		if BOARD:
+			self.kit = MotorKit(i2c=board.I2C())
+			self.stepper = self.kit.stepper2 if axis == 0 else self.kit.stepper1
+		self.currentPosition = [0, 0]
+		self.AXIS = axis #0 is x, 1 is y
+		setup(axis) #Setup pin for edge button detection
 
 	def move(self, distance):
 		global g_cancel
@@ -54,25 +45,24 @@ class Motor():
 		toMove = int(abs(distance) * self.CONVERSION)
 		for i in range(toMove): #TODO: Deceive what to do if we need to round
 			movedDistance += (1 if distance > 0 else -1)
-			if g_cancel or self.currentPosition[Motor.AXIS] * Motor.CONVERSION + movedDistance > Motor.MAX_X:
+			if g_cancel or self.currentPosition[self.AXIS] * Motor.CONVERSION + movedDistance > Motor.MAX_X:
 				g_cancel = False
 				for _ in range(1 * self.CONVERSION):
 					if BOARD:
-						kit.stepper1.onestep(style=stepper.DOUBLE, direction=opp_dir)
-					a = 'x' if Motor.AXIS == 0 else 'y'
+						self.stepper.onestep(style=stepper.DOUBLE, direction=opp_dir)
+					a = 'x' if self.AXIS == 0 else 'y'
 				logging.warning(
 					f"Edge detected on axis {a}  moved {movedDistance} steps or {movedDistance / Motor.CONVERSION} cm.")
 				break
 			if BOARD:
-				kit.stepper1.onestep(style=stepper.DOUBLE, direction=direction)
-		self.currentPosition[Motor.AXIS] += int(movedDistance / Motor.CONVERSION)
+				self.stepper.onestep(style=stepper.DOUBLE, direction=direction)
+		self.currentPosition[self.AXIS] += int(movedDistance / Motor.CONVERSION)
 		self.cleanUp()
 
-	@staticmethod
-	def cleanUp():
+	def cleanUp(self):
 		# os.system("python /home/pi/chessBoard/motorControl.py")
 		if BOARD:
-			kit.stepper1.release()
+			self.stepper.release()
 		else:
 			print("Motor released!")
 		# with open(self.POSITION_FILE, "w") as f:
@@ -83,7 +73,7 @@ class Motor():
 		self.currentPosition = [0, 0]
 
 	def goTo(self, newPos):
-		d = newPos[Motor.AXIS] - self.currentPosition[Motor.AXIS]
+		d = newPos[self.AXIS] - self.currentPosition[self.AXIS]
 		self.move(d)
 		return self.currentPosition
 
@@ -107,17 +97,16 @@ def calibrate():
 	Motor.instance().move(-1 * Motor.MAX_X)
 	Motor.instance().currentPosition = (0, 0)
 
-def setup():
+def setup(pin):
 	GPIO.setmode(GPIO.BCM)  
-	GPIO.setup(in_pins["button"], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-	GPIO.add_event_detect(in_pins["button"], GPIO.RISING, callback=stop, bouncetime=200) 
+	GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+	GPIO.add_event_detect(pin, GPIO.RISING, callback=stop, bouncetime=200) 
 
-myMotor = Motor.instance()
+myMotor = Motor(0)
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, signal_handler)
-	x = Motor.instance()
-	x.home()
-	x.goTo([10, 10])
-	x.goTo([-5, -5])
-	print(x.currentPosition)
+	myMotor.home()
+	myMotor.goTo([10, 10])
+	myMotor.goTo([-5, -5])
+	print(myMotor.currentPosition)

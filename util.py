@@ -13,7 +13,8 @@ except ModuleNotFoundError:
 logging.basicConfig(level=logging.DEBUG)
 
 in_pins = {
-	"button": 17
+	0: 5, #0 is for x axis pin
+	1: 27 #1 is for y axis pin
 }
 
 def isInputHigh(pin):
