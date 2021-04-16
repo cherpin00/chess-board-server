@@ -27,7 +27,7 @@ class Motor():
 	CONVERSION = 50
 	MAX_X = 45 * CONVERSION
 	POSITION_FILE = "currenPosition.dat"
-	AXIS = 0 #0 is x, 1 is y
+	AXIS = 1 #0 is x, 1 is y
 
 	def __init__(self):
 		raise RuntimeError('Call instance() instead')
@@ -56,16 +56,11 @@ class Motor():
 				for _ in range(1 * self.CONVERSION):
 					if BOARD:
 						kit.stepper1.onestep(style=stepper.DOUBLE, direction=opp_dir)
-					else:
-						print(f"Stepping ... ({movedDistance})")
 				logging.error(
 					f"ERROR: {movedDistance} is out of bounds of {self.MAX_X}")
 				break
 			if BOARD:
 				kit.stepper1.onestep(style=stepper.DOUBLE, direction=direction)
-			else:
-				if i % 1000 == 0:
-					print(f"Stepping ... ({movedDistance})")
 		self.currentPosition[Motor.AXIS] += int(movedDistance / Motor.CONVERSION)
 		self.cleanUp()
 

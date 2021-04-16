@@ -40,8 +40,8 @@ def move():
 @app.route("/mouse/position", methods=["POST"])
 def mouse_position():
     x, y = request.json["x"], request.json["y"]
-    x = x/10
-    y = y/10
+    x = x/5 - 93
+    y = y/5 - 2
     currPosition = motorControl.myMotor.goTo([x, y])
     print(f"Current Position: {currPosition}")
     return f"position ({currPosition})"
