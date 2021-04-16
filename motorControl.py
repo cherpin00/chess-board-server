@@ -3,9 +3,10 @@ import logging
 import sys
 import os
 import signal
+import util
 
 
-BOARD = True
+BOARD = util.BOARD
 try:
 	from adafruit_motor import stepper
 	from RPi import GPIO
@@ -27,7 +28,7 @@ class Motor():
 	CONVERSION = 50
 	MAX_X = 45 * CONVERSION
 	POSITION_FILE = "currenPosition.dat"
-	AXIS = 1 #0 is x, 1 is y
+	AXIS = 0 #0 is x, 1 is y
 
 	def __init__(self):
 		raise RuntimeError('Call instance() instead')
@@ -36,11 +37,12 @@ class Motor():
 	def instance(cls):
 		if cls._instance is None:
 			cls._instance = cls.__new__(cls)
-			cls.movedDistance = 0
 			cls.currentPosition = [0, 0]
+			setup()
 		return cls._instance
 
 	def move(self, distance):
+		global g_cancel
 		movedDistance = 0
 		opp_dir = None
 		if distance < 0:
@@ -52,12 +54,14 @@ class Motor():
 		toMove = int(abs(distance) * self.CONVERSION)
 		for i in range(toMove): #TODO: Deceive what to do if we need to round
 			movedDistance += (1 if distance > 0 else -1)
-			if g_cancel:
+			if g_cancel or self.currentPosition[Motor.AXIS] * Motor.CONVERSION + movedDistance > Motor.MAX_X:
+				g_cancel = False
 				for _ in range(1 * self.CONVERSION):
 					if BOARD:
 						kit.stepper1.onestep(style=stepper.DOUBLE, direction=opp_dir)
-				logging.error(
-					f"ERROR: {movedDistance} is out of bounds of {self.MAX_X}")
+					a = 'x' if Motor.AXIS == 0 else 'y'
+				logging.warning(
+					f"Edge detected on axis {a}  moved {movedDistance} steps or {movedDistance / Motor.CONVERSION} cm.")
 				break
 			if BOARD:
 				kit.stepper1.onestep(style=stepper.DOUBLE, direction=direction)
@@ -112,6 +116,8 @@ myMotor = Motor.instance()
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, signal_handler)
-	setup()
-	x = Motor()
-	x.move(-200)
+	x = Motor.instance()
+	x.home()
+	x.goTo([10, 10])
+	x.goTo([-5, -5])
+	print(x.currentPosition)
