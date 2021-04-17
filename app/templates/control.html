@@ -21,6 +21,7 @@
     <button id="submit">Submit</button>
 </div>
 {% endblock %} {% block javascripts %}
+{% comment %} to add mouse event listener -- document.getElementById("board").addEventListener("mousemove", tHandler); {% endcomment %}
 <script>
 	function throttled(delay, fn) {
   		let lastCall = 0;
@@ -53,7 +54,6 @@
 
 	const tHandler = throttled(1000, myHandler);
 
-	document.getElementById("board").addEventListener("mousemove", tHandler);
 
     document.getElementById("calibrate").onclick = () => {
         jQuery.ajax({

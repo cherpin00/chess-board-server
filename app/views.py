@@ -43,12 +43,13 @@ def mouse_position():
     if request.args.get("convert") != "false":
         x = x/5 - 93
         y = y/5 - 2
-    currPosition = motorControl.myMotor.goTo([x, y])
-    print(f"Current Position: {currPosition}")
-    return f"position ({currPosition})"
+    # currPosition = motorControl.myMotor.goTo([x, y])
+    motorControl.myGoto(x, y)
+    # print(f"Current Position: {currPosition}")
+    return f"success"
 
 
 @app.route("/calibrate")
 def calibrate():
-    motorControl.myMotor.home()
-    return jsonify({ "message" : f"Successfully homed arm. Current Posistion : {motorControl.myMotor.currentPosition}"})
+    motorControl.myHome()
+    return jsonify({ "message" : f"Successfully homed arm. Current Posistion : unknown"})

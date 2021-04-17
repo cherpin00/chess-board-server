@@ -3,6 +3,8 @@ import logging
 import sys
 import os
 import signal
+import threading
+
 import util
 
 
@@ -18,22 +20,23 @@ except ModuleNotFoundError:
 
 from util import in_pins, isInputHigh, interrupt_handler
 
-g_cancel = False
+g_cancel_x = False
 
 class Motor():
 	CONVERSION = 50
-	MAX_X = 45 * CONVERSION
-
+	
 	def __init__(self, axis):
 		if BOARD:
 			self.kit = MotorKit(i2c=board.I2C())
-			self.stepper = self.kit.stepper2 if axis == 0 else self.kit.stepper1
+			self.stepper = self.kit.stepper1 if axis == 0 else self.kit.stepper2
+		self.MAX = 58 if axis == 0 else 55
+		self.MAX *= Motor.CONVERSION
 		self.currentPosition = [0, 0]
 		self.AXIS = axis #0 is x, 1 is y
-		setup(axis) #Setup pin for edge button detection
+		setup(in_pins[axis]) #Setup pin for edge button detection
 
 	def move(self, distance):
-		global g_cancel
+		global g_cancel_x
 		movedDistance = 0
 		opp_dir = None
 		if distance < 0:
@@ -45,8 +48,8 @@ class Motor():
 		toMove = int(abs(distance) * self.CONVERSION)
 		for i in range(toMove): #TODO: Deceive what to do if we need to round
 			movedDistance += (1 if distance > 0 else -1)
-			if g_cancel or self.currentPosition[self.AXIS] * Motor.CONVERSION + movedDistance > Motor.MAX_X:
-				g_cancel = False
+			if g_cancel_x or self.currentPosition[self.AXIS] * Motor.CONVERSION + movedDistance > self.MAX:
+				g_cancel_x = False
 				for _ in range(1 * self.CONVERSION):
 					if BOARD:
 						self.stepper.onestep(style=stepper.DOUBLE, direction=opp_dir)
@@ -69,7 +72,7 @@ class Motor():
 		#     f.write(str(self.movedDistance))
 
 	def home(self):
-		self.move(-1 * Motor.MAX_X)
+		self.move(-1 * self.MAX)
 		self.currentPosition = [0, 0]
 
 	def goTo(self, newPos):
@@ -89,12 +92,12 @@ def signal_handler(sig, frame):
 
 
 def stop(channel):
-	global g_cancel
-	g_cancel = True
+	global g_cancel_x
+	g_cancel_x = True
 	return
 
 def calibrate():
-	Motor.instance().move(-1 * Motor.MAX_X)
+	Motor.instance().move(-1 * self.MAX)
 	Motor.instance().currentPosition = (0, 0)
 
 def setup(pin):
@@ -102,11 +105,47 @@ def setup(pin):
 	GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 	GPIO.add_event_detect(pin, GPIO.RISING, callback=stop, bouncetime=200) 
 
-myMotor = Motor(0)
+x = Motor(0)
+y = Motor(1)
+
+def x_thread(c):
+	x.goTo([c, 0])
+
+def y_thread(c):
+	y.goTo([0, c])
+
+
+def myGoto(x, y):
+	t1 = threading.Thread(target=x_thread, args=(x,))
+	t2 = threading.Thread(target=y_thread, args=(y,))
+	t1.start()
+	t2.start()
+	t1.join()
+	t2.join()
+
+def myHome():
+	t1 = threading.Thread(target=x.home)
+	t2 = threading.Thread(target=y.home)
+	t1.start()
+	t1.join()
+	t2.start()
+	t2.join()
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, signal_handler)
-	myMotor.home()
-	myMotor.goTo([10, 10])
-	myMotor.goTo([-5, -5])
-	print(myMotor.currentPosition)
+	x.home()
+	y.home()
+	# myGoto(15, 15)
+	# # input("...")
+	# myGoto(0, 15)
+	# # input("...")
+	# myGoto(15, 0)
+	# input("...")
+	# x.home()
+	# y.home()
+	# sleep(1)
+	# x.goTo([10, 10])
+	# x.goTo([5, 5])
+	# y.goTo([10, 10])
+	# y.goTo([5, 5])
+	# print(x.currentPosition)

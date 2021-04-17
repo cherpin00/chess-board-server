@@ -1,4 +1,5 @@
-from motorControl import Motor
+from motorControl import x, y
 
 if __name__ == "__main__":
-    Motor.cleanUp()
+    x.cleanUp()
+    y.cleanUp()
