@@ -13,15 +13,18 @@
 	></canvas>
     <button id="calibrate">Calibrate</button>
     <form action="none" id="form">
-        <label >X coordinate</label>
+		<label >X coordinate</label>
         <input type="text" id="x" name="x"><br><br>
         <label >Y coordinate</label>
         <input type="text" id="y" name="y"><br><br>
     </form>
     <button id="submit">Submit</button>
+	<label class="switch">
+		<input id="checkBox" type="checkbox">
+  		<span class="slider round"></span>
+	</label>
 </div>
 {% endblock %} {% block javascripts %}
-{% comment %} to add mouse event listener -- document.getElementById("board").addEventListener("mousemove", tHandler); {% endcomment %}
 <script>
 	function throttled(delay, fn) {
   		let lastCall = 0;
@@ -69,6 +72,29 @@
         var formData = $('form').serializeArray()
         move(formData[0]["value"], formData[1]["value"], convert="false")
     }
+
+	jQuery.ajax(
+			{
+			url: "/toggle",
+			type: "GET",
+			success: (response) => {
+				console.log(response);
+			},
+	})
+	document.getElementById("checkBox").onclick = () => {
+		console.log("on")
+
+		jQuery.ajax(
+			{
+			url: "/toggle",
+			type: "GET",
+			success: (response) => {
+				console.log(response);
+			},
+			})
+
+	};
+
     
 </script>
 {% endblock %}

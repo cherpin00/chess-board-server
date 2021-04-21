@@ -6,6 +6,7 @@ import signal
 import threading
 
 import util
+import electromagnet
 
 
 BOARD = util.BOARD
@@ -29,7 +30,7 @@ class Motor():
 		if BOARD:
 			self.kit = MotorKit(i2c=board.I2C())
 			self.stepper = self.kit.stepper1 if axis == 0 else self.kit.stepper2
-		self.MAX = 58 if axis == 0 else 55
+		self.MAX = 59 if axis == 0 else 55
 		self.MAX *= Motor.CONVERSION
 		self.currentPosition = [0, 0]
 		self.AXIS = axis #0 is x, 1 is y
@@ -114,7 +115,6 @@ def x_thread(c):
 def y_thread(c):
 	y.goTo([0, c])
 
-
 def myGoto(x, y):
 	t1 = threading.Thread(target=x_thread, args=(x,))
 	t2 = threading.Thread(target=y_thread, args=(y,))
@@ -131,10 +131,56 @@ def myHome():
 	t2.start()
 	t2.join()
 
+
+
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, signal_handler)
 	x.home()
 	y.home()
+
+	electromagnet.magnet.off()
+	myGoto(20,10)
+	electromagnet.magnet.on()
+	myGoto(20,5)
+	electromagnet.magnet.off()
+	myGoto(15,5)
+	electromagnet.magnet.on()
+	myGoto(20,10)
+	electromagnet.magnet.off()
+	myGoto(20,5)
+	electromagnet.magnet.on()
+	myGoto(15,5)
+	electromagnet.magnet.off()
+	
+	electromagnet.magnet.off()
+	myGoto(10,10)
+	electromagnet.magnet.on()
+	myGoto(5,10)
+	electromagnet.magnet.off()
+	myGoto(15,5)
+	electromagnet.magnet.on()
+	myGoto(10,5)
+	electromagnet.magnet.off()
+	myGoto(20,10)
+	electromagnet.magnet.on()
+	myGoto(15,10)
+	electromagnet.magnet.off()
+
+	electromagnet.magnet.off()
+	myGoto(15,10)
+	electromagnet.magnet.on()
+	myGoto(20,10)
+	electromagnet.magnet.off()
+	myGoto(10,5)
+	electromagnet.magnet.on()
+	myGoto(15,5)
+	electromagnet.magnet.off()
+	myGoto(5,10)
+	electromagnet.magnet.on()
+	myGoto(10,10)
+	electromagnet.magnet.off()
+
+
 	# myGoto(15, 15)
 	# # input("...")
 	# myGoto(0, 15)
