@@ -3,9 +3,13 @@ import logging
 import sys
 import os
 import signal
+import threading
+
+import util
+import electromagnet
 
 
-BOARD = True
+BOARD = util.BOARD
 try:
 	from adafruit_motor import stepper
 	from RPi import GPIO
@@ -17,30 +21,23 @@ except ModuleNotFoundError:
 
 from util import in_pins, isInputHigh, interrupt_handler
 
-if BOARD:
-	kit = MotorKit(i2c=board.I2C())
-
-g_cancel = False
+g_cancel_x = False
 
 class Motor():
-	_instance = None
 	CONVERSION = 50
-	MAX_X = 45 * CONVERSION
-	POSITION_FILE = "currenPosition.dat"
-	AXIS = 1 #0 is x, 1 is y
-
-	def __init__(self):
-		raise RuntimeError('Call instance() instead')
-
-	@classmethod
-	def instance(cls):
-		if cls._instance is None:
-			cls._instance = cls.__new__(cls)
-			cls.movedDistance = 0
-			cls.currentPosition = [0, 0]
-		return cls._instance
+	
+	def __init__(self, axis):
+		if BOARD:
+			self.kit = MotorKit(i2c=board.I2C())
+			self.stepper = self.kit.stepper1 if axis == 0 else self.kit.stepper2
+		self.MAX = 59 if axis == 0 else 55
+		self.MAX *= Motor.CONVERSION
+		self.currentPosition = [0, 0]
+		self.AXIS = axis #0 is x, 1 is y
+		setup(in_pins[axis]) #Setup pin for edge button detection
 
 	def move(self, distance):
+		global g_cancel_x
 		movedDistance = 0
 		opp_dir = None
 		if distance < 0:
@@ -52,34 +49,35 @@ class Motor():
 		toMove = int(abs(distance) * self.CONVERSION)
 		for i in range(toMove): #TODO: Deceive what to do if we need to round
 			movedDistance += (1 if distance > 0 else -1)
-			if g_cancel:
+			if g_cancel_x or self.currentPosition[self.AXIS] * Motor.CONVERSION + movedDistance > self.MAX:
+				g_cancel_x = False
 				for _ in range(1 * self.CONVERSION):
 					if BOARD:
-						kit.stepper1.onestep(style=stepper.DOUBLE, direction=opp_dir)
-				logging.error(
-					f"ERROR: {movedDistance} is out of bounds of {self.MAX_X}")
+						self.stepper.onestep(style=stepper.DOUBLE, direction=opp_dir)
+					a = 'x' if self.AXIS == 0 else 'y'
+				logging.warning(
+					f"Edge detected on axis {a}  moved {movedDistance} steps or {movedDistance / Motor.CONVERSION} cm.")
 				break
 			if BOARD:
-				kit.stepper1.onestep(style=stepper.DOUBLE, direction=direction)
-		self.currentPosition[Motor.AXIS] += int(movedDistance / Motor.CONVERSION)
+				self.stepper.onestep(style=stepper.DOUBLE, direction=direction)
+		self.currentPosition[self.AXIS] += int(movedDistance / Motor.CONVERSION)
 		self.cleanUp()
 
-	@staticmethod
-	def cleanUp():
+	def cleanUp(self):
 		# os.system("python /home/pi/chessBoard/motorControl.py")
 		if BOARD:
-			kit.stepper1.release()
+			self.stepper.release()
 		else:
 			print("Motor released!")
 		# with open(self.POSITION_FILE, "w") as f:
 		#     f.write(str(self.movedDistance))
 
 	def home(self):
-		self.move(-1 * Motor.MAX_X)
+		self.move(-1 * self.MAX)
 		self.currentPosition = [0, 0]
 
 	def goTo(self, newPos):
-		d = newPos[Motor.AXIS] - self.currentPosition[Motor.AXIS]
+		d = newPos[self.AXIS] - self.currentPosition[self.AXIS]
 		self.move(d)
 		return self.currentPosition
 
@@ -95,23 +93,105 @@ def signal_handler(sig, frame):
 
 
 def stop(channel):
-	global g_cancel
-	g_cancel = True
+	global g_cancel_x
+	g_cancel_x = True
 	return
 
 def calibrate():
-	Motor.instance().move(-1 * Motor.MAX_X)
+	Motor.instance().move(-1 * self.MAX)
 	Motor.instance().currentPosition = (0, 0)
 
-def setup():
+def setup(pin):
 	GPIO.setmode(GPIO.BCM)  
-	GPIO.setup(in_pins["button"], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-	GPIO.add_event_detect(in_pins["button"], GPIO.RISING, callback=stop, bouncetime=200) 
+	GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+	GPIO.add_event_detect(pin, GPIO.RISING, callback=stop, bouncetime=200) 
 
-myMotor = Motor.instance()
+x = Motor(0)
+y = Motor(1)
+
+def x_thread(c):
+	x.goTo([c, 0])
+
+def y_thread(c):
+	y.goTo([0, c])
+
+def myGoto(x, y):
+	t1 = threading.Thread(target=x_thread, args=(x,))
+	t2 = threading.Thread(target=y_thread, args=(y,))
+	t1.start()
+	t2.start()
+	t1.join()
+	t2.join()
+
+def myHome():
+	t1 = threading.Thread(target=x.home)
+	t2 = threading.Thread(target=y.home)
+	t1.start()
+	t1.join()
+	t2.start()
+	t2.join()
+
+
 
 if __name__ == "__main__":
 	signal.signal(signal.SIGINT, signal_handler)
-	setup()
-	x = Motor()
-	x.move(-200)
+	x.home()
+	y.home()
+
+	electromagnet.magnet.off()
+	myGoto(20,10)
+	electromagnet.magnet.on()
+	myGoto(20,5)
+	electromagnet.magnet.off()
+	myGoto(15,5)
+	electromagnet.magnet.on()
+	myGoto(20,10)
+	electromagnet.magnet.off()
+	myGoto(20,5)
+	electromagnet.magnet.on()
+	myGoto(15,5)
+	electromagnet.magnet.off()
+	
+	electromagnet.magnet.off()
+	myGoto(10,10)
+	electromagnet.magnet.on()
+	myGoto(5,10)
+	electromagnet.magnet.off()
+	myGoto(15,5)
+	electromagnet.magnet.on()
+	myGoto(10,5)
+	electromagnet.magnet.off()
+	myGoto(20,10)
+	electromagnet.magnet.on()
+	myGoto(15,10)
+	electromagnet.magnet.off()
+
+	electromagnet.magnet.off()
+	myGoto(15,10)
+	electromagnet.magnet.on()
+	myGoto(20,10)
+	electromagnet.magnet.off()
+	myGoto(10,5)
+	electromagnet.magnet.on()
+	myGoto(15,5)
+	electromagnet.magnet.off()
+	myGoto(5,10)
+	electromagnet.magnet.on()
+	myGoto(10,10)
+	electromagnet.magnet.off()
+
+
+	# myGoto(15, 15)
+	# # input("...")
+	# myGoto(0, 15)
+	# # input("...")
+	# myGoto(15, 0)
+	# input("...")
+	# x.home()
+	# y.home()
+	# sleep(1)
+	# x.goTo([10, 10])
+	# x.goTo([5, 5])
+	# y.goTo([10, 10])
+	# y.goTo([5, 5])
+	# print(x.currentPosition)

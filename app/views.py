@@ -7,6 +7,7 @@ from flask.json import jsonify
 
 from app import app
 import motorControl
+import electromagnet
 
 
 @app.route('/')
@@ -39,14 +40,22 @@ def move():
 
 @app.route("/mouse/position", methods=["POST"])
 def mouse_position():
-    x, y = request.json["x"], request.json["y"]
-    x = x/5 - 93
-    y = y/5 - 2
-    currPosition = motorControl.myMotor.goTo([x, y])
-    print(f"Current Position: {currPosition}")
-    return f"position ({currPosition})"
+    x, y = int(request.json["x"]), int(request.json["y"])
+    if request.args.get("convert") != "false":
+        x = x/5 - 93
+        y = y/5 - 2
+    # currPosition = motorControl.myMotor.goTo([x, y])
+    motorControl.myGoto(x, y)
+    # print(f"Current Position: {currPosition}")
+    return f"success"
+
 
 @app.route("/calibrate")
 def calibrate():
-    motorControl.myMotor.home()
-    return jsonify({ "message" : f"Successfully homed arm. Current Posistion : {motorControl.myMotor.currentPosition}"})
+    motorControl.myHome()
+    return jsonify({ "message" : f"Successfully homed arm. Current Posistion : unknown"})
+
+@app.route("/toggle")
+def toggle():
+    electromagnet.magnet.toggle()
+    return jsonify({ "message" : f"Successfully turned magnet {electromagnet.magnet.isOn}"})
