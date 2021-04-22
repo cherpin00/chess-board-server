@@ -24,6 +24,8 @@ else:
 from util import in_pins, isInputHigh, interrupt_handler
 
 g_cancel_x = False
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 class Motor():
 	CONVERSION = 50
@@ -39,6 +41,7 @@ class Motor():
 		self.AXIS = axis #0 is x, 1 is y
 
 	def move(self, distance):
+		logger.info(f"Starting move of {distance} cm on axis {self.AXIS}.  Moving from {self.currentPosition}.")
 		global g_cancel_x
 		movedDistance = 0
 		opp_dir = None
@@ -65,6 +68,8 @@ class Motor():
 				self.stepper.onestep(style=stepper.DOUBLE, direction=direction)
 		self.currentPosition[self.AXIS] += int(movedDistance / Motor.CONVERSION)
 		self.cleanUp()
+		logger.info(f"Finished move of {movedDistance / Motor.CONVERSION} cm on {self.AXIS}.  Moved to {self.currentPosition}.")
+
 
 	def cleanUp(self):
 		# os.system("python /home/pi/chessBoard/motorControl.py")
