@@ -26,6 +26,8 @@ def mag(info):
 def function(info):
     if info["name"] == "home":
         motorControl.myHome()
+    elif info["name"] == "toggle":
+        electromagnet.magnet.toggle()
 
 switch = {
     "goto" : goto,
