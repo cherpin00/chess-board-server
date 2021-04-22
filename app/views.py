@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 
 import chess
 from flask import render_template, send_from_directory, request
@@ -8,6 +9,7 @@ from flask.json import jsonify
 from app import app
 import motorControl
 import electromagnet
+from util import getSocket, send, host_board, port_board
 
 
 @app.route('/')
@@ -44,10 +46,15 @@ def mouse_position():
     if request.args.get("convert") != "false":
         x = x/5 - 93
         y = y/5 - 2
-    # currPosition = motorControl.myMotor.goTo([x, y])
-    motorControl.myGoto(x, y)
+    s = getSocket(host=host_board, port=port_board)
+    data = send(s, json.dumps({
+        "type" : "goto",
+        "x" : x,
+        "y" : y
+    }))
+    s.close()
     # print(f"Current Position: {currPosition}")
-    return f"success"
+    return jsonify({ "message" : "success", "data" : str(data)})
 
 
 @app.route("/calibrate")

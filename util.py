@@ -1,6 +1,10 @@
 from time import sleep
 import logging
 import threading
+import socket
+
+host_board = "localhost"
+port_board = 5001
 
 BOARD = True
 try:
@@ -27,3 +31,14 @@ def interrupt_handler(pin):
 	logging.debug("channel AFTER")
 	if GPIO.input(in_pins["button"]):
 		return True
+
+def send(s, msg):
+	s.send(msg.encode('ascii'))
+	data = s.recv(1024)
+	print('Received from the server :',str(data.decode('ascii')),"\n")
+	return data
+
+def getSocket(host='127.0.0.1', port=5000):
+	s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+	s.connect((host,port))
+	return s

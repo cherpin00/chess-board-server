@@ -6,18 +6,20 @@ import signal
 import threading
 
 import util
-import electromagnet
 
-
-BOARD = util.BOARD
-try:
-	from adafruit_motor import stepper
-	from RPi import GPIO
-	import board
-	from adafruit_motorkit import MotorKit
-except ModuleNotFoundError:
-	logging.warning("Module error in motorControl module. Running without board")
-	BOARD = False
+from util import BOARD
+if BOARD:
+	try:
+		from adafruit_motor import stepper
+		from RPi import GPIO
+		import board
+		from adafruit_motorkit import MotorKit
+		import electromagnet
+	except ModuleNotFoundError:
+		logging.warning("Module error in motorControl module. Running without board")
+		BOARD = False
+else:
+	pass #TODO: WRite message here
 
 from util import in_pins, isInputHigh, interrupt_handler
 
@@ -30,22 +32,23 @@ class Motor():
 		if BOARD:
 			self.kit = MotorKit(i2c=board.I2C())
 			self.stepper = self.kit.stepper1 if axis == 0 else self.kit.stepper2
+			setup(in_pins[axis]) #Setup pin for edge button detection
 		self.MAX = 59 if axis == 0 else 55
 		self.MAX *= Motor.CONVERSION
 		self.currentPosition = [0, 0]
 		self.AXIS = axis #0 is x, 1 is y
-		setup(in_pins[axis]) #Setup pin for edge button detection
 
 	def move(self, distance):
 		global g_cancel_x
 		movedDistance = 0
 		opp_dir = None
-		if distance < 0:
-			opp_dir = stepper.FORWARD
-			direction = stepper.BACKWARD
-		else:
-			opp_dir = stepper.BACKWARD
-			direction = stepper.FORWARD
+		if BOARD:
+			if distance < 0:
+				opp_dir = stepper.FORWARD
+				direction = stepper.BACKWARD
+			else:
+				opp_dir = stepper.BACKWARD
+				direction = stepper.FORWARD
 		toMove = int(abs(distance) * self.CONVERSION)
 		for i in range(toMove): #TODO: Deceive what to do if we need to round
 			movedDistance += (1 if distance > 0 else -1)
