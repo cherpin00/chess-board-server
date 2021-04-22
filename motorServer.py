@@ -23,9 +23,14 @@ def mag(info):
         s = "off"
     return "Magnet is " + s
 
+def function(info):
+    if info["name"] == "home":
+        motorControl.myHome()
+
 switch = {
     "goto" : goto,
-    "mag" : mag
+    "mag" : mag,
+    "function" : function
 }
   
 motor_lock = threading.Lock()
