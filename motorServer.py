@@ -7,16 +7,28 @@ from _thread import *
 import threading
 
 import motorControl
+import electromagnet
 
 def goto(info):
-    # motorControl.myGoto(float(info["x"]), float(info["y"]))
-    print("goto info:", info)
+    motorControl.myGoto(float(info["x"]), float(info["y"]))
+    return [motorControl.x.currentPosition[0], motorControl.y.currentPosition[1]]
+
+def mag(info):
+    s = ""
+    if info["status"] == "on":
+        electromagnet.magnet.on()
+        s = "on"
+    else:
+        electromagnet.magnet.on()
+        s = "off"
+    return "Magnet is " + s
 
 switch = {
-    "goto" : goto
+    "goto" : goto,
+    "mag" : mag
 }
   
-print_lock = threading.Lock()
+motor_lock = threading.Lock()
   
 # thread function
 def threaded(c):
@@ -28,16 +40,21 @@ def threaded(c):
             print('Bye')
               
             # lock released on exit
-            print_lock.release()
+            motor_lock.release()
             break
         try:
             myJson = json.loads(data.strip())
             try:
-                switch[myJson["type"]](myJson)
+                type = myJson["type"]
             except Exception as e:
-                c.send(str.encode("Unknown type\n" + str(e) + "\n"))
+                c.send(str.encode(f"Unknown type {type}\n"))
                 continue
-            c.send(str.encode("success" + "\n"))
+            try:
+                res = switch[type](myJson)
+            except Exception as e:
+                c.send(str.encode("Unknown error: " + str(e) + "\n"))
+                continue
+            c.send(str.encode("success" + "\n" + "res: " + str(res)))
         except Exception as e:
             c.send(str.encode(str(e) + "\n"))
   
@@ -46,9 +63,9 @@ def threaded(c):
 
 
 def Main():
-    host = ""
+    host = "0.0.0.0"
   
-    port = 5000
+    port = 5001
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((host, port))
     print("socket binded to port", port)
@@ -64,7 +81,7 @@ def Main():
         c, addr = s.accept()
   
         # lock acquired by client
-        print_lock.acquire()
+        motor_lock.acquire()
         print('Connected to :', addr[0], ':', addr[1])
   
         # Start a new thread and return its identifier
