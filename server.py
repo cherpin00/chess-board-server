@@ -1,10 +1,9 @@
 # import socket programming library
 import socket
 import json
-  
-# import thread module
 from _thread import *
 import threading
+import pexpect
 
 import motor
 import electromagnet
@@ -69,10 +68,7 @@ def threaded(c):
     c.close()
 
 
-def Main():
-    host = "0.0.0.0"
-  
-    port = 5001
+def Main(host, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((host, port))
     print("socket binded to port", port)
@@ -97,4 +93,7 @@ def Main():
   
   
 if __name__ == '__main__':
-    Main()
+    host = "localhost"
+    port = 6000
+    ssh = pexpect.spawnu(f'ssh -R {6001}:localhost:{port} cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
+    Main(host, port)

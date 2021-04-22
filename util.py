@@ -4,7 +4,7 @@ import threading
 import socket
 
 host_board = "localhost"
-port_board = 5001
+port_board = 6001
 
 BOARD = True
 try:
