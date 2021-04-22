@@ -6,7 +6,7 @@ import json
 from _thread import *
 import threading
 
-import motorControl
+import motor
 import electromagnet
 
 def goto(info):
