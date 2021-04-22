@@ -10,8 +10,8 @@ import motor
 import electromagnet
 
 def goto(info):
-    motorControl.myGoto(float(info["x"]), float(info["y"]))
-    return [motorControl.x.currentPosition[0], motorControl.y.currentPosition[1]]
+    motor.myGoto(float(info["x"]), float(info["y"]))
+    return [motor.x.currentPosition[0], motor.y.currentPosition[1]]
 
 def mag(info):
     s = ""
@@ -25,7 +25,7 @@ def mag(info):
 
 def function(info):
     if info["name"] == "home":
-        motorControl.myHome()
+        motor.myHome()
     elif info["name"] == "toggle":
         electromagnet.magnet.toggle()
 

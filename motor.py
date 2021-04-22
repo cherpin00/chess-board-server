@@ -100,10 +100,6 @@ def stop(channel):
 	g_cancel_x = True
 	return
 
-def calibrate():
-	Motor.instance().move(-1 * self.MAX)
-	Motor.instance().currentPosition = (0, 0)
-
 def setup(pin):
 	GPIO.setmode(GPIO.BCM)  
 	GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
