@@ -4,6 +4,7 @@ import json
 from _thread import *
 import threading
 import pexpect
+import logging
 
 import motor
 import electromagnet
@@ -35,6 +36,7 @@ switch = {
 }
   
 motor_lock = threading.Lock()
+logging.basicConfig(level=logging.DEBUG)
   
 # thread function
 def threaded(c):
@@ -95,5 +97,5 @@ def Main(host, port):
 if __name__ == '__main__':
     host = "localhost"
     port = 6000
-    ssh = pexpect.spawnu(f'ssh -R {6001}:localhost:{port} cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
+    ssh = pexpect.spawnu(f'autossh -R 6001:localhost:6000 cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
     Main(host, port)
