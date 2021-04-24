@@ -19,7 +19,7 @@ def mag(info):
         electromagnet.magnet.on()
         s = "on"
     else:
-        electromagnet.magnet.on()
+        electromagnet.magnet.off()
         s = "off"
     return "Magnet is " + s
 
@@ -96,6 +96,6 @@ def Main(host, port):
   
 if __name__ == '__main__':
     host = "localhost"
-    port = 6000
-    ssh = pexpect.spawnu(f'autossh -R 6001:localhost:6000 cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
+    port = 6003
+    ssh = pexpect.spawnu(f'autossh -R 6001:localhost:{port} cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
     Main(host, port)

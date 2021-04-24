@@ -7,11 +7,12 @@ host_board = "localhost"
 port_board = 6001
 
 BOARD = True
-try:
-	import RPi.GPIO as GPIOis
-except ModuleNotFoundError:
-	logging.warning("Module RPI.GPIO error.  Running without board")
-	BOARD = False
+# try:
+import RPi.GPIO as GPIOis
+# except ModuleNotFoundError as e:
+# 	logging.error("Module RPI.GPIO error.  Running without board")
+# 	logging.error("Error is " + str(e))
+# 	BOARD = False
 
 
 logging.basicConfig(level=logging.DEBUG)

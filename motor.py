@@ -15,8 +15,9 @@ if BOARD:
 		import board
 		from adafruit_motorkit import MotorKit
 		import electromagnet
-	except ModuleNotFoundError:
-		logging.warning("Module error in motorControl module. Running without board")
+	except ModuleNotFoundError as e:
+		logging.error("Module error in motorControl module. Running without board")
+		logging.error("error is: " + str(e))
 		BOARD = False
 else:
 	pass #TODO: WRite message here
@@ -35,12 +36,17 @@ class Motor():
 			self.kit = MotorKit(i2c=board.I2C())
 			self.stepper = self.kit.stepper1 if axis == 0 else self.kit.stepper2
 			setup(in_pins[axis]) #Setup pin for edge button detection
-		self.MAX = 59 if axis == 0 else 55
+		self.MAX = 50 if axis == 0 else 50
 		self.MAX *= Motor.CONVERSION
 		self.currentPosition = [0, 0]
 		self.AXIS = axis #0 is x, 1 is y
 
 	def move(self, distance):
+		if distance == 0:
+			return
+		self._move(distance)
+
+	def _move(self, distance):
 		logger.info(f"Starting move of {distance} cm on axis {self.AXIS}.  Moving from {self.currentPosition}.")
 		global g_cancel_x
 		movedDistance = 0
@@ -66,7 +72,7 @@ class Motor():
 				break
 			if BOARD:
 				self.stepper.onestep(style=stepper.DOUBLE, direction=direction)
-		self.currentPosition[self.AXIS] += int(movedDistance / Motor.CONVERSION)
+		self.currentPosition[self.AXIS] += float(movedDistance / Motor.CONVERSION)
 		self.cleanUp()
 		logger.info(f"Finished move of {movedDistance / Motor.CONVERSION} cm on {self.AXIS}.  Moved to {self.currentPosition}.")
 
@@ -123,8 +129,8 @@ def myGoto(x, y):
 	t1 = threading.Thread(target=x_thread, args=(x,))
 	t2 = threading.Thread(target=y_thread, args=(y,))
 	t1.start()
-	t2.start()
 	t1.join()
+	t2.start()
 	t2.join()
 
 def myHome():
