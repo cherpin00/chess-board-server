@@ -19,7 +19,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 in_pins = {
 	0: 27, #0 is for x axis pin
-	1: 5 #1 is for y axis pin
+	1: 5, #1 is for y axis pin
+	"camera" : 21
 }
 
 def isInputHigh(pin):

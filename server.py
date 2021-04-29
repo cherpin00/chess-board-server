@@ -8,6 +8,7 @@ import logging
 
 import motor
 import electromagnet
+import camera
 
 def goto(info):
     motor.myGoto(float(info["x"]), float(info["y"]))
@@ -97,5 +98,5 @@ def Main(host, port):
 if __name__ == '__main__':
     host = "localhost"
     port = 6003
-    ssh = pexpect.spawnu(f'autossh -R 6001:localhost:{port} cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
+    # ssh = pexpect.spawnu(f'autossh -R 6001:localhost:{port} cherpin@home.herpin.net -p 7270') #TODO: Get output so I can check for an error.
     Main(host, port)

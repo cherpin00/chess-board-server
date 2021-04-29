@@ -36,7 +36,7 @@ class Motor():
 			self.kit = MotorKit(i2c=board.I2C())
 			self.stepper = self.kit.stepper1 if axis == 0 else self.kit.stepper2
 			setup(in_pins[axis]) #Setup pin for edge button detection
-		self.MAX = 50 if axis == 0 else 50
+		self.MAX = 53 if axis == 0 else 50
 		self.MAX *= Motor.CONVERSION
 		self.currentPosition = [0, 0]
 		self.AXIS = axis #0 is x, 1 is y
@@ -60,16 +60,17 @@ class Motor():
 				direction = stepper.FORWARD
 		toMove = int(abs(distance) * self.CONVERSION)
 		for i in range(toMove): #TODO: Deceive what to do if we need to round
-			movedDistance += (1 if distance > 0 else -1)
 			if g_cancel_x or self.currentPosition[self.AXIS] * Motor.CONVERSION + movedDistance > self.MAX:
 				g_cancel_x = False
 				for _ in range(1 * self.CONVERSION):
+					movedDistance -= (1 if distance > 0 else -1)
 					if BOARD:
 						self.stepper.onestep(style=stepper.DOUBLE, direction=opp_dir)
 					a = 'x' if self.AXIS == 0 else 'y'
 				logging.warning(
 					f"Edge detected on axis {a}  moved {movedDistance} steps or {movedDistance / Motor.CONVERSION} cm.")
 				break
+			movedDistance += (1 if distance > 0 else -1)
 			if BOARD:
 				self.stepper.onestep(style=stepper.DOUBLE, direction=direction)
 		self.currentPosition[self.AXIS] += float(movedDistance / Motor.CONVERSION)
